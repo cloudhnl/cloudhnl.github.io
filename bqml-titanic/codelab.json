@@ -1,0 +1,25 @@
+{
+  "environment": "web",
+  "source": "1DCqfJGmGCT6cpQjHjzWKOmmSkUobYuQ_9wFZxQpLcnQ",
+  "format": "html",
+  "prefix": "../../",
+  "mainga": "UA-49880327-14",
+  "updated": "2018-11-02T08:55:32Z",
+  "id": "bqml-titanic",
+  "duration": 20,
+  "title": "Titanic: Machine Learning from Disaster (BigQuery ML)",
+  "author": "mokio8",
+  "summary": "In this codelab, you will use BigQuery ML to build a machine learning model to identify whether or not an individual is likely to survive the sinking of the RMS Titanic. You will inspect this model, describe what it means and then use it against Kaggle's test data set from the \"Machine Learning from Disaster\" competition.",
+  "theme": "web",
+  "status": [
+    "draft"
+  ],
+  "category": [
+    "Web"
+  ],
+  "tags": [
+    "web"
+  ],
+  "feedback": "https://github.com/cloudhnl/cloudhnl.github.io/issues",
+  "url": "bqml-titanic"
+}

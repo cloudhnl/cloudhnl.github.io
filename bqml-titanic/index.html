@@ -1,0 +1,302 @@
+
+<!doctype html>
+
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
+  <meta name="theme-color" content="#4F7DC9">
+  <meta charset="UTF-8">
+  <title>Titanic: Machine Learning from Disaster (BigQuery ML)</title>
+  <script src="../../bower_components/webcomponentsjs/webcomponents-lite.js"></script>
+  <link rel="import" href="../../elements/codelab.html">
+  <link rel="stylesheet" href="//fonts.googleapis.com/css?family=Source+Code+Pro:400|Roboto:400,300,400italic,500,700|Roboto+Mono">
+  <style is="custom-style">
+    body {
+      font-family: "Roboto",sans-serif;
+      background: var(--google-codelab-background, #F8F9FA);
+    }
+  </style>
+  
+</head>
+<body unresolved class="fullbleed">
+
+  <google-codelab title="Titanic: Machine Learning from Disaster (BigQuery ML)"
+                  environment="web"
+                  feedback-link="https://github.com/cloudhnl/cloudhnl.github.io/issues">
+    
+      <google-codelab-step label="Overview" duration="2">
+        <p>In this codelab, you will learn how to use BigQuery ML to build a machine learning model that predicts wether or not a passenger on the Titanic RMS is likely to survive based on the known attributes. Given that we are only looking to predict one of two classes (survived v.s. not survived) we will use a binary logistic regression model. </p>
+<p>We will use the dataset from Kaggle&#39;s &#34;Machine Learning from Disaster&#34; competition and submit our predictions to Kaggle for evaluation. </p>
+<h2 class="checklist"><strong>What you&#39;ll learn</strong></h2>
+<ul class="checklist">
+<li>How to download train and test data from a Kaggle competition with the Kaggle API</li>
+<li>How to load a csv file as a BigQuery table</li>
+<li>How to use BigQuery ML to create a binary logistic regression model using the CREATE MODEL statement.</li>
+<li>How to make predictions using a BigQueryML model</li>
+</ul>
+<h2><strong>What you&#39;ll need</strong></h2>
+<ul>
+<li>A Google Cloud Platform Project</li>
+<li>A <a href="https://www.kaggle.com" target="_blank">Kaggle</a> account.</li>
+<li>A Browser, such Chrome or Firefox</li>
+<li>Basic knowledge of SQL and Machine Learning</li>
+</ul>
+<aside class="special"><p>If you want to predict multiple classes you would use a <a href="https://cloud.google.com/bigquery/docs/bigqueryml-intro" target="_blank">multiclass logistic regression model</a> instead.</p>
+</aside>
+<google-codelab-survey survey-id="bqml-titanic-1">
+<h4>How will you use this tutorial?</h4>
+<paper-radio-group>
+<paper-radio-button>Only read through it</paper-radio-button>
+<paper-radio-button>Read it and complete the exercises</paper-radio-button>
+</paper-radio-group>
+</google-codelab-survey>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Setup and Requirements" duration="5">
+        <h2>Self-paced environment setup</h2>
+<p>If you don&#39;t already have a Google Account (Gmail or Google Apps), you must create one. Sign-in to Google Cloud Platform console (console.cloud.google.com) and create a new project:</p>
+<p><img style="max-width: 278.00px" src="img/f3cb4399b08ecd5a.png"></p>
+<p><img style="max-width: 418.50px" src="img/76ea61f0bc1a1fa8.png"></p>
+<p>Remember the project ID, a unique name across all Google Cloud projects (the name above has already been taken and will not work for you, sorry!). It will be referred to later in this codelab as PROJECT_ID.</p>
+<p>New users of Google Cloud Platform are eligible for a <a href="https://console.developers.google.com/billing/freetrial?hl=en" target="_blank">$300 free trial</a>.</p>
+<h2>Python environment</h2>
+<p>Create a virtual environment to encapsulate the project specific packages. </p>
+<pre><code>mkdir -p ~/bqml-kaggle-titanic
+cd ~/bqml-kaggle-titanic
+virtualenv venv/ --no-site-packages</code></pre>
+<p>Activate the virtual environment and load the Kaggle package through pip.</p>
+<pre><code>source venv/bin/activate
+pip install kaggle</code></pre>
+<h2><strong>Kaggle API credentials</strong></h2>
+<p>To use the Kaggle API, sign up for a Kaggle account at <a href="https://www.kaggle.com/" target="_blank">https://www.kaggle.com</a>. Then go to the &#39;Account&#39; tab of your user profile (<code>https://www.kaggle.com/&lt;username&gt;/account</code>) and select &#39;Create API Token&#39;.Open the newly downloaded json  file and get the username and key.</p>
+<p>Add the following to the bottom of in cloud shell <code>~/.bashrc</code> using nano or vim and start a new cloud shell session. Also make sure to accept the terms for any competition you will be entering otherwise you will get a 403 api error. </p>
+<pre>export KAGGLE_USERNAME=xxxx
+export KAGGLE_KEY=xxxxxxxxxxxxxx</pre>
+<aside class="special"><p>From this point forward, your credentials will be added to the environment of every cloud shell session. Start a new cloud shell session and enter the command bellow (you should see your username):</p>
+<p>echo $KAGGLE_USERNAME</p>
+</aside>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Data" duration="5">
+        <h2><strong>Download the train and test data</strong></h2>
+<p>Use the Kaggle API to download train.csv and test.csv. You can explore the competition in <a href="https://www.kaggle.com/c/titanic" target="_blank">more depth here</a>. </p>
+<pre><code>cd ~/bqml-kaggle-titanic
+source venv/bin/activate</code></pre>
+<pre><code>kaggle competitions download -c titanic</code></pre>
+<p>View the newly downloaded files</p>
+<pre><code>ls -al</code></pre>
+<p>You should see the following files:</p>
+<ul>
+<li>train.csv: this is your training data which you will use to build your model. </li>
+<li>test.csv: this is your test data which you will use in the prediction stage. </li>
+<li>gender_submission.csv</li>
+</ul>
+<p>Set the project variables. </p>
+<pre><code>export BQ_DATASET=kaggle
+export BQ_TABLE=titanic_train
+export PROJECT_ID=
+export MODEL_NAME=titanic</code></pre>
+<h2><strong>Create datasets</strong></h2>
+<pre><code>bq --location=US mk --dataset --description &#34;Kaggle Datasets&#34; $PROJECT_ID:$BQ_DATASET</code></pre>
+<pre><code>bq --location=US mk --dataset --description &#34;Kaggle Datasets&#34; $PROJECT_ID:models</code></pre>
+<h2><strong>Load train and test data</strong></h2>
+<p>In cloud shell use the bq command line tool with the  --<code>autodetect</code> to auto generate the schema and set <code>source_format to CSV.</code></p>
+<pre><code>bq --location=US load --source_format=CSV --autodetect $BQ_DATASET.titanic_train ./train.csv</code></pre>
+<pre><code>bq --location=US load --source_format=CSV --autodetect $BQ_DATASET.titanic_test ./test.csv</code></pre>
+<p><img style="max-width: 624.00px" src="img/2f0ee7d539fecc0.png"></p>
+<p>Check BigQuery UI:</p>
+<ul>
+<li>Open the dataset</li>
+<li>Open the table</li>
+<li>Preview the training data</li>
+</ul>
+<p>In the next step we are going to create a classification model.</p>
+<p>Further reading:</p>
+<ul>
+<li><a href="https://cloud.google.com/bigquery/docs/loading-data-local" target="_blank">Loading Data into BigQuery from a Local Data Source</a></li>
+<li><a href="https://www.kaggle.com/c/titanic" target="_blank">Kaggle: Machine Learning from Disaster</a></li>
+</ul>
+<aside class="warning"><p>If you receive a 403 error from the Kaggle API make sure you have accepted the terms for this specific competition. </p>
+</aside>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Build" duration="3">
+        <p>Given that what we are predicting is a binary classification output we will use BigQuery ML&#39;s Binary logistic regression model. Select each existing column as a feature and set <code>Survived</code> as the label we want to predict.</p>
+<p>Enter the following standard SQL query in the Query editor text area (remember to change to variables i,e [PROJECT_ID]).</p>
+<pre><code>#standardSQL
+CREATE OR REPLACE MODEL `[PROJECT_ID].models.[MODEL_NAME]`
+OPTIONS(model_type=&#39;logistic_reg&#39;) AS
+SELECT
+  Survived AS label,
+  Pclass,
+  Name,
+  Sex,
+  Age,
+  SibSp,
+  Parch,
+  Ticket,
+  Fare,
+  Cabin,
+  Embarked
+FROM
+  `[PROJECT_ID].[BQ_DATASET].[BQ_TABLE]`</code></pre>
+<p><img style="max-width: 665.00px" src="img/48fb7af434081926.png"></p>
+<p>Further reading:</p>
+<ul>
+<li><a href="https://cloud.google.com/bigquery/docs/bigqueryml-intro" target="_blank">Introduction to BigQuery ML</a></li>
+<li><a href="https://cloud.google.com/bigquery/docs/reference/standard-sql/bigqueryml-syntax-create" target="_blank">Tune the BigQuery ML Model</a></li>
+</ul>
+<aside class="special"><p>We&#39;ve given you the markup and styles to save you some time and make sure you&#39;re starting on a solid foundation. In the next section, you&#39;ll have an opportunity to write your own code.</p>
+</aside>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Evaluate" duration="5">
+        <h2><strong>ML.EVALUATE</strong></h2>
+<p>The output of the ML.EVALUATE function is a single row containing common metrics applicable to the model supplied.</p>
+<p>The output columns for logistic regression are:</p>
+<ul>
+<li><strong>Precision: </strong>What proportion of positive identifications was actually correct?</li>
+<li><strong>Recall: </strong>What proportion of actual positives was identified correctly?</li>
+<li><strong>Accuracy: </strong>Accuracy is one metric for evaluating classification models. Informally, accuracy is the fraction of predictions our model got right</li>
+<li><strong>f1_score:</strong></li>
+<li><strong>log_loss:</strong></li>
+<li><strong>roc_auc:</strong></li>
+</ul>
+<p>Enter the following standard SQL query in the <strong>Query editor</strong> text area (remember to change to variables i,e [PROJECT_ID]).</p>
+<pre><code>#standardSQL
+SELECT
+  *
+FROM
+  ML.EVALUATE(MODEL `[PROJECT_ID].models.[MODEL_NAME]`, (
+SELECT
+  Survived AS label,
+  Pclass,
+  Name,
+  Sex,
+  Age,
+  SibSp,
+  Parch,
+  Ticket,
+  Fare,
+  Cabin,
+  Embarked
+FROM
+  `[PROJECT_ID].[BQ_DATASET].[BQ_TABLE]`))</code></pre>
+<p><img style="max-width: 610.00px" src="img/f8fe677dd37fb174.png"></p>
+<h2>Confusion Matrix</h2>
+<p>Build a confusion matrix to get an idea of where our model is doing well and where it is struggling.</p>
+<p>Enter the following standard SQL query in the Query editor text area (remember to change to variables i,e [PROJECT_ID]).</p>
+<pre><code>SELECT
+  *
+FROM
+  ML.CONFUSION_MATRIX(MODEL `[PROJECT_ID].models.[MODEL_NAME]`,
+  (
+    SELECT
+      Survived as label,
+      Pclass,
+      Name,
+      Sex,
+      Age,
+      SibSp,
+      Parch,
+      Ticket,
+      Fare,
+      Cabin,
+      Embarked
+
+    FROM
+      `[PROJECT_ID].[BQ_DATASET].[BQ_TABLE]`))
+</code></pre>
+<p><img style="max-width: 624.00px" src="img/5a6ddf51c5ae29dc.png"></p>
+<p><strong>Further reading:</strong></p>
+<ul>
+<li><a href="https://developers.google.com/machine-learning/crash-course/classification/precision-and-recall" target="_blank">Precision and recall</a></li>
+<li><a href="https://developers.google.com/machine-learning/crash-course/classification/accuracy" target="_blank">Accuracy</a></li>
+<li><a href="https://developers.google.com/machine-learning/crash-course/classification/roc-and-auc" target="_blank">Classification: ROC and AUC</a></li>
+<li><a href="https://en.wikipedia.org/wiki/Confusion_matrix" target="_blank">Confusion Matrix</a></li>
+</ul>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Predict" duration="0">
+        <p>Use the model we built in the previous step to predict the Survived column for our test data. </p>
+<p>Enter the following standard SQL query in the Query editor text area (remember to change to variables i,e [PROJECT_ID]).</p>
+<pre><code>#standardSQL
+SELECT
+  PassengerId,
+  SUM(predicted_label) as Survived
+FROM
+  ML.PREDICT(MODEL `[PROJECT_ID].models.[MODEL_NAME]`, (
+SELECT
+  PassengerId,
+  Pclass,
+  Name,
+  Sex,
+  Age,
+  SibSp,
+  Parch,
+  Ticket,
+  Fare,
+  Cabin,
+  Embarked
+FROM
+  `[PROJECT_ID].kaggle.titanic_test`))
+GROUP BY PassengerId
+ORDER BY PassengerId
+</code></pre>
+<h2><strong>Download and submit predictions</strong></h2>
+<table>
+<tr><td colspan="1" rowspan="1"><p>In this codelab, you built a simple model to predict wether or not an individual will survive the crash of the Titanic RMS. To take it to the next level submit your results to Kaggle and look at the further reading sections in previous pages for tips on how to improve your model. </p>
+<ul>
+<li>Save your output as a CSV</li>
+<li>Make a submission in Kaggle using the UI</li>
+<li>Refine your model</li>
+</ul>
+</td><td colspan="1" rowspan="1"><p><img style="max-width: 297.00px" src="img/e52e8e0367c7cac3.png"></p>
+</td></tr>
+</table>
+
+
+      </google-codelab-step>
+    
+  </google-codelab>
+
+  <script>
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+    ga('create', 'UA-49880327-14', 'auto');
+
+    (function() {
+      var gaCodelab = '';
+      if (gaCodelab) {
+        ga('create', gaCodelab, 'auto', {name: 'codelab'});
+      }
+
+      var gaView;
+      var parts = location.search.substring(1).split('&');
+      for (var i = 0; i < parts.length; i++) {
+        var param = parts[i].split('=');
+        if (param[0] === 'viewga') {
+          gaView = param[1];
+          break;
+        }
+      }
+      if (gaView && gaView !== gaCodelab) {
+        ga('create', gaView, 'auto', {name: 'view'});
+      }
+    })();
+  </script>
+
+</body>
+</html>
