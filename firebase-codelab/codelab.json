@@ -1,0 +1,24 @@
+{
+  "environment": "web",
+  "source": "1tHMFPcMmmAIQL1TiuVUyBFl6oMF4bD34KLSFsy4Ei84",
+  "format": "html",
+  "prefix": "../../",
+  "mainga": "UA-49880327-14",
+  "updated": "2018-12-07T03:07:13Z",
+  "id": "firebase-codelab",
+  "duration": 0,
+  "title": "Firebase Codelab",
+  "author": "John Zhou",
+  "summary": "In this lab, you'll learn how to deploy a Firebase web application.",
+  "theme": "web",
+  "status": [
+    "published"
+  ],
+  "category": [
+    "Web"
+  ],
+  "tags": [
+    "web"
+  ],
+  "url": "firebase-codelab"
+}
