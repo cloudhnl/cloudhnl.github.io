@@ -1,0 +1,206 @@
+
+<!doctype html>
+
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
+  <meta name="theme-color" content="#4F7DC9">
+  <meta charset="UTF-8">
+  <title>Firebase Codelab</title>
+  <script src="../../bower_components/webcomponentsjs/webcomponents-lite.js"></script>
+  <link rel="import" href="../../elements/codelab.html">
+  <link rel="stylesheet" href="//fonts.googleapis.com/css?family=Source+Code+Pro:400|Roboto:400,300,400italic,500,700|Roboto+Mono">
+  <style is="custom-style">
+    body {
+      font-family: "Roboto",sans-serif;
+      background: var(--google-codelab-background, #F8F9FA);
+    }
+  </style>
+  
+</head>
+<body unresolved class="fullbleed">
+
+  <google-codelab title="Firebase Codelab"
+                  environment="web"
+                  feedback-link="">
+    
+      <google-codelab-step label="Overview" duration="0">
+        <p>In this codelab, you&#39;ll learn how to use Firebase by deploying a chat application. Details on how to implement a Firebase web application will be glossed over.</p>
+<h2 class="checklist"><strong>What you&#39;ll learn</strong></h2>
+<ul class="checklist">
+<li><strong>Firebase Realtime Database</strong> - How to save data.</li>
+<li><strong>Cloud Storage for Firebase</strong> - How to upload images.</li>
+<li><strong>Firebase Auth</strong> - How to authenticate users.</li>
+<li><strong>Firebase Hosting</strong> - How to deploy your web app.</li>
+<li><strong>Firebase Cloud Messaging</strong> - How to send notifications.</li>
+<li><strong>Google Cloud Functions</strong> - How to trigger cloud functions based on Realtime Database events.</li>
+</ul>
+<h2><strong>What you&#39;ll need</strong></h2>
+<ul>
+<li>npm</li>
+<li>git</li>
+<li>A browser like Firefox or Chrome.</li>
+<li>Basic knowledge of HTML and JavaScript.</li>
+</ul>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Creating and setting up a Firebase project" duration="0">
+        <h2><strong>Create a Firebase project</strong></h2>
+<p>In the <a href="https://console.firebase.google.com/" target="_blank">Firebase console</a>, click <strong>Add project</strong>, then name your project <em>CloudHnlLab</em>.</p>
+<p><img style="max-width: 287.50px" src="img\80df2a468a5fdd09.png"></p>
+<h2>Enable Google sign-in</h2>
+<p>To allow users to sign into the web app, we&#39;ll use Google sign-in.</p>
+<aside class="special"><p>There are other authentication methods but how to use them is outside the scope of this lab. Note that from the perspective of Firebase, Google authentication is the highest authority in the land.</p>
+</aside>
+<ol type="1" start="1">
+<li>In the Firebase console, look for the <strong>Develop</strong> section on the left sidebar.</li>
+<li>Click on <strong>Authentication</strong>, then click on the <strong>Sign-in method</strong> tab.</li>
+<li>Under Sign-in providers, click on <strong>Google</strong>, set your <strong>project support email</strong>, toggle <strong>Enable</strong>, and lastly click on the <strong>Save</strong> button.</li>
+</ol>
+<h2>Enable Firebase Realtime Database</h2>
+<ol type="1" start="1">
+<li>In the Firebase console, under the <strong>Develop</strong> section click on <strong>Database</strong>.</li>
+<li>Scroll down and click on the <strong>Create database</strong> button in the Realtime Database section.</li>
+<li>Select the <strong>Start in test mode</strong> radio button and click on the <strong>Enable</strong> button.</li>
+</ol>
+<h2><strong>Enable Cloud Storage</strong></h2>
+<ol type="1" start="1">
+<li>In the Firebase console, under the <strong>Develop</strong> section click on <strong>Storage</strong>.</li>
+<li>Click the <strong>Get Started</strong> button followed by the <strong>Got It</strong> button.</li>
+</ol>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Downloading and setting up the sample project" duration="0">
+        <aside class="special"><p>Note that git needs to be installed.</p>
+</aside>
+<ol type="1" start="1">
+<li>Clone the sample project using git:</li>
+</ol>
+<pre>git clone https://github.com/cloudhnl/firebase-web-app.git</pre>
+<aside class="special"><p>Note that npm needs to be installed in order to install the CLI.</p>
+</aside>
+<ol type="1" start="2">
+<li>Run the following command:</li>
+</ol>
+<pre>npm -g install firebase-tools</pre>
+<ol type="1" start="3">
+<li>Login to your Firebase account by running:</li>
+</ol>
+<pre>firebase login</pre>
+<aside class="special"><p>The sample project was initially created by running the command: <code>firebase init</code></p>
+</aside>
+<ol type="1" start="4">
+<li>Make sure that you&#39;re in the top level directory of the provided sample project. Then associate the web app with the Firebase project you created earlier by running:</li>
+</ol>
+<pre>firebase use --add</pre>
+<ol type="1" start="5">
+<li>There will be a prompt to select the Project ID of your Firebase project. Then give your project the alias of <em>default</em>.</li>
+</ol>
+<aside class="special"><p>Other common aliases: development, testing, staging, production.</p>
+</aside>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Running the sample app locally" duration="0">
+        <p>We can use the Firebase Hosting emulator to run our sample web app locally. In the top level directory of the sample project, run the following command:</p>
+<pre>firebase serve --only hosting</pre>
+<p>You should now be able to access your app by going to <a href="http://localhost:5000/" target="_blank">http://localhost:5000</a>.</p>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Updating security rules" duration="0">
+        <h2><strong>Realtime Database Security Rules</strong></h2>
+<p>The Firebase Realtime Database uses security rules to define access rights, security, and data validation. Currently, because we chose test mode earlier, anyone can read and write to your database. In our sample project we have created predefined security rules. You can deploy these security rules by running the command:</p>
+<pre>firebase deploy --only database</pre>
+<aside class="special"><p>If you want to take a look at the database security rules, they can be found in <code>database.rules.json</code>. For more information on security rules, head over to https://firebase.google.com/docs/database/security/.</p>
+</aside>
+<h2><strong>Cloud Storage Security Rules</strong></h2>
+<p>Cloud Storage for Firebase also uses security rules to define access rights, security, and data validation. Earlier, when we enabled Cloud Storage, we chose to use the default security rules that allows only authenticated users to read and write to Cloud Storage. In our sample project we have provided security rules that further restricts what can be uploaded. You can deploy these security rules by running the command:</p>
+<pre>firebase deploy --only storage</pre>
+<aside class="special"><p>If you want to take a look at the storage security rules, they can be found in <code>storage.rules</code>. For more information on security rules, head over to https://firebase.google.com/docs/storage/security/start.</p>
+</aside>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Notification" duration="0">
+        <p>Firebase Cloud Messaging can be used to send notifications (e.g. browser notifications, push notifications). When you ran the sample app locally you were probably prompted by your browser to accept or block notifications.</p>
+<p>Sending a notification to a specific device</p>
+<ol type="1" start="1">
+<li>After accepting notifications, open the JavaScript console in your browser. You should see a message that contains your FCM device token. Copy this for later.</li>
+<li>Obtain your Firebase Server Key by going to your Firebase console, and clicking on the gear icon in the left sidebar. Then click on <strong>Project settings</strong> and then click on the <strong>Cloud Messaging</strong> tab. There you can copy the Server Key.<img style="max-width: 569.50px" src="img\8f58ab2ea62f5dba.png"></li>
+<li>Next, send a HTTP request using the following curl command (be sure to fill in your Server Key and FCM device token from earlier:</li>
+</ol>
+<pre>curl -H &#34;Content-Type: application/json&#34; \
+     -H &#34;Authorization: key=SERVER_KEY&#34; \
+     -d &#39;{
+           &#34;notification&#34;: {
+             &#34;title&#34;: &#34;New notification!&#34;,
+             &#34;body&#34;: &#34;There is a new notification&#34;,
+             &#34;click_action&#34;: &#34;http://localhost:5000&#34;
+           },
+           &#34;to&#34;: &#34;FCM_DEVICE_TOKEN&#34;
+         }&#39; \
+     https://fcm.googleapis.com/fcm/send</pre>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Cloud Functions" duration="0">
+        <p>We can use Cloud Functions in cases where you have to run code in the backend without a server. To start off, let&#39;s set up and deploy the sample functions that have been pre-made for this codelab:</p>
+<pre>cd functions
+npm install
+cd ..
+firebase deploy --only functions</pre>
+<p>You can take a look at the code in the index.js file. What it will do is send a notification to when a user signs in for the first time. It will also send a notification when a new message is posted to the chat client. In the next section we will test them out.</p>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Deploying the app" duration="0">
+        <p>The sample app can be published to Firebase Hosting. You settings for hosting the app can be found in firebase.json. You can deploy your app from CLI by running the following command:</p>
+<pre>firebase deploy --only hosting</pre>
+<p>Now you can visit the sample app at <code>https://&lt;firebase-project-id&gt;.firebaseapp.com</code>.</p>
+<p>Ask someone to visit your site and login. That should trigger the cloud function to generate a welcome message. Also, if you display another tab or navigate away from the page, then whenever someone posts a message in chat, you will see a notification.</p>
+
+
+      </google-codelab-step>
+    
+  </google-codelab>
+
+  <script>
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+    ga('create', 'UA-49880327-14', 'auto');
+
+    (function() {
+      var gaCodelab = '';
+      if (gaCodelab) {
+        ga('create', gaCodelab, 'auto', {name: 'codelab'});
+      }
+
+      var gaView;
+      var parts = location.search.substring(1).split('&');
+      for (var i = 0; i < parts.length; i++) {
+        var param = parts[i].split('=');
+        if (param[0] === 'viewga') {
+          gaView = param[1];
+          break;
+        }
+      }
+      if (gaView && gaView !== gaCodelab) {
+        ga('create', gaView, 'auto', {name: 'view'});
+      }
+    })();
+  </script>
+
+</body>
+</html>
